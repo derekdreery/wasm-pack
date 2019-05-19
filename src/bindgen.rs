@@ -15,6 +15,7 @@ pub fn wasm_bindgen_build(
     bindgen: &Download,
     out_dir: &Path,
     out_name: &Option<String>,
+    wasm_bindgen_location: Option<PathBuf>,
     disable_dts: bool,
     target: Target,
     profile: BuildProfile,
@@ -44,7 +45,14 @@ pub fn wasm_bindgen_build(
         Target::Web => "--web",
         Target::Bundler => "--browser",
     };
-    let bindgen_path = bindgen.binary("wasm-bindgen")?;
+    let bindgen_path = if let Some(wbin) = wasm_bindgen_location {
+        if !wbin.is_file() {
+            bail!("custom wasm-bindgen location doesn't point to a file");
+        }
+        wbin
+    } else {
+        bindgen.binary("wasm-bindgen")?
+    };
     let mut cmd = Command::new(bindgen_path);
     cmd.arg(&wasm_path)
         .arg("--out-dir")
@@ -67,6 +75,7 @@ pub fn wasm_bindgen_build(
         cmd.arg("--keep-debug");
     }
 
+    log::debug!("running command {:?}", cmd);
     child::run(cmd, "wasm-bindgen").context("Running the wasm-bindgen CLI")?;
     Ok(())
 }

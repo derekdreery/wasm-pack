@@ -29,6 +29,7 @@ pub struct Build {
     pub profile: BuildProfile,
     pub mode: InstallMode,
     pub out_dir: PathBuf,
+    pub wasm_bindgen_location: Option<PathBuf>,
     pub out_name: Option<String>,
     pub bindgen: Option<Download>,
     pub cache: Cache,
@@ -134,6 +135,11 @@ pub struct BuildOptions {
     /// Sets the output file names. Defaults to package name.
     pub out_name: Option<String>,
 
+    /// A path to a `wasm-bindgen` binary to use. This can be used if maintaining a patched
+    /// `wasm-bindgen`.
+    #[structopt(long = "wasm-bindgen-location", parse(from_os_str))]
+    pub wasm_bindgen_location: Option<PathBuf>,
+
     #[structopt(last = true)]
     /// List of extra options to pass to `cargo build`
     pub extra_options: Vec<String>,
@@ -153,6 +159,7 @@ impl Default for BuildOptions {
             profiling: false,
             out_dir: String::new(),
             out_name: None,
+            wasm_bindgen_location: None,
             extra_options: Vec::new(),
         }
     }
@@ -187,6 +194,7 @@ impl Build {
             mode: build_opts.mode,
             out_dir,
             out_name: build_opts.out_name,
+            wasm_bindgen_location: build_opts.wasm_bindgen_location,
             bindgen: None,
             cache: cache::get_wasm_pack_cache()?,
             extra_options: build_opts.extra_options,
@@ -354,6 +362,7 @@ impl Build {
             self.bindgen.as_ref().unwrap(),
             &self.out_dir,
             &self.out_name,
+            self.wasm_bindgen_location.clone(),
             self.disable_dts,
             self.target,
             self.profile,
